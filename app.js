@@ -79,15 +79,28 @@ app.get(
           description: args.eventInput.description,
           price: +args.eventInput.price,
           date: new Date(args.eventInput.date),
+          creator: "5f9b6b3b7b0b3c2b1c0b0b3c",
         });
+
+        let createdEvent;
+
         return event
           .save()
-          .then((result) => {
-            console.log(result);
-            return {
+          .then(async (result) => {
+            createdEvent = {
               ...result._doc,
               _id: result._doc._id.toString(),
             };
+            return User.findById("5f9b6b3b7b0b3c2b1c0b0b3c").then((user) => {
+              if (user) {
+                throw new Error("User already exists.");
+              }
+              user.createdEvents.push(event);
+              return user.save();
+            });
+          })
+          .then((result) => {
+            return createdEvent;
           })
           .catch((err) => {
             console.log(err);
