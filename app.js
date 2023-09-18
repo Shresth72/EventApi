@@ -3,9 +3,11 @@ const bodyParser = require("body-parser");
 const { graphqlHTTP } = require("express-graphql");
 //exports a valid middleware, take incoming request and forward it to graphql for parsing
 
+const bcrypt = require("bcryptjs");
 const { buildSchema } = require("graphql");
 const mongoose = require("mongoose");
 const Event = require("./models/event");
+const User = require("./models/user");
 
 const app = express();
 
@@ -25,11 +27,22 @@ app.get(
             date: String!
         }
 
+        type User {
+            _id: ID!
+            email: String!  
+            password: String
+        }
+
         input EventInput {
             title: String!
             description: String!
             price: Float!
             date: String!
+        }
+
+        input UserInput {
+            email: String!
+            password: String!
         }
 
         type RootQuery {
@@ -38,6 +51,7 @@ app.get(
 
         type RootMutation {
             createEvent(eventInput: EventInput): Event
+            createUser(userInput: UserInput): User
         }
 
         schema {
@@ -82,7 +96,29 @@ app.get(
             throw err;
           });
       },
+      createUser: async (args) => {
+        bcrypt
+          .hash(args.userInput.password, 12)
+          .then((hashedPassword) => {
+            const user = new User({
+              email: args.userInput.email,
+              password: hashedPassword,
+            });
+            return user.save();
+          })
+          .then((result) => {
+            return {
+              ...result._doc,
+              password: null,
+              _id: result.id,
+            };
+          })
+          .catch((err) => {
+            throw err;
+          });
+      },
     },
+
     graphiql: true,
   })
 );
