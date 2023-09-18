@@ -92,8 +92,8 @@ app.get(
               _id: result._doc._id.toString(),
             };
             return User.findById("5f9b6b3b7b0b3c2b1c0b0b3c").then((user) => {
-              if (user) {
-                throw new Error("User already exists.");
+              if (!user) {
+                throw new Error("User not found.");
               }
               user.createdEvents.push(event);
               return user.save();
